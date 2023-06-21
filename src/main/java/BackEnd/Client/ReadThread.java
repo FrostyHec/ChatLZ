@@ -1,5 +1,6 @@
 package BackEnd.Client;
 
+import BackEnd.MessageHandler;
 import BackEnd.MessageTypePack.MessageType;
 import BackEnd.MessageTypePack.SystemMessageType;
 import BackEnd.PackageHandler;
@@ -9,7 +10,7 @@ import java.lang.reflect.Method;
 import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 
-public class ReadThread implements Runnable {
+public class ReadThread implements Runnable, MessageHandler {
     SocketChannel socketChannel;
     ReadHandler reader;
     Client client;
@@ -43,6 +44,7 @@ public class ReadThread implements Runnable {
         System.out.println("监听线程结束");
     }
 
+    @Override
     public void messageHandle(MessageType type, byte[] sender, byte[] receiver, byte[] bodyByte) {
         switch (type) {
             case File -> {
@@ -52,7 +54,12 @@ public class ReadThread implements Runnable {
                 reader.read(sender, new String(bodyByte));
             }
             case SystemMessage -> {
-                reader.read(SystemMessageType.get(ByteConvert.byteArray2Int(bodyByte)));
+                int msgBodyLen=bodyByte.length-SystemMessageType.headLength;
+                byte[] msgHead = new byte[SystemMessageType.headLength],details=new byte[msgBodyLen];
+                System.arraycopy(bodyByte, 0, msgHead, 0, msgHead.length);
+                System.arraycopy(bodyByte,SystemMessageType.headLength,details,0,details.length);
+                SystemMessageType systemMsgType = SystemMessageType.get(ByteConvert.byteArray2Int(msgHead));
+                reader.read(systemMsgType,details);
             }
         }
     }

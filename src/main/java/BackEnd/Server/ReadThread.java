@@ -1,5 +1,7 @@
 package BackEnd.Server;
 
+import BackEnd.Client.ReadHandler;
+import BackEnd.MessageHandler;
 import BackEnd.MessageTypePack.MessageType;
 import BackEnd.PackageHandler;
 
@@ -7,7 +9,7 @@ import java.lang.reflect.Method;
 import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 
-public class ReadThread implements Runnable {
+public class ReadThread implements Runnable, MessageHandler {
     SocketChannel channel;
     Server server;
     PackageHandler helper;
@@ -38,6 +40,7 @@ public class ReadThread implements Runnable {
         }
     }
 
+    @Override
     public void messageHandle(MessageType type, byte[] sender, byte[] receiver, byte[] bodyByte) {
         System.out.println(type.name());
         switch (type) {

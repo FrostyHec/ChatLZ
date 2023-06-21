@@ -17,12 +17,13 @@ public class ReadHandler {
         System.out.println(name + "说：" + words);
     }
 
-    public void read(SystemMessageType systemMessageType) {
+    public void read(SystemMessageType systemMessageType,byte[] details) {
         //TODO 处理系统消息
         switch (systemMessageType){
             case UserNotFound -> {
                 System.out.println("系统消息：用户不存在！");
             }case CurrentUserList -> {
+                //TODO 实现获取当前用户列表
             }case NameDuplicated -> {
                 System.out.println("系统消息：名称重复！");
                 client.targetResetName();
