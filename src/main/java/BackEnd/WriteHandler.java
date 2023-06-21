@@ -1,5 +1,6 @@
 package BackEnd;
 
+import BackEnd.Exception.NameSetting.UsernameTooLongException;
 import BackEnd.MessageTypePack.MessageType;
 import BackEnd.MessageTypePack.RequestToSeverMsg;
 
@@ -11,10 +12,10 @@ public class WriteHandler {
         System.arraycopy(origin2,0,nameByteArray,0,origin2.length);
         return nameByteArray;
     }
-    public ByteBuffer initName(String userName) throws Exception {//如果不是32字符以内则抛出异常
+    public ByteBuffer initName(String userName) throws UsernameTooLongException {//如果不是32字符以内则抛出异常
         byte[] arr = userName.getBytes();
         int len = arr.length, maxLen = MessageType.userNameLength;
-        if (len > maxLen) throw new Exception("User name too long: length " + len);//超过32个字符
+        if (len > maxLen) throw new UsernameTooLongException(len);//超过32个字符
 
         byte[] name = new byte[maxLen], empty = new byte[maxLen];
         System.arraycopy(arr, 0, name, 0, len);

@@ -1,7 +1,7 @@
 package BackEnd.Server;
 
 import BackEnd.Exception.UserNotFoundException;
-import BackEnd.Exception.UserDuplicatedException;
+import BackEnd.Exception.NameSetting.UserDuplicatedException;
 import BackEnd.PackageHandler;
 import BackEnd.Tools.ByteConvert;
 
@@ -27,7 +27,7 @@ public class ClientsList {
         return channelHelper.get(channel);
     }
 
-    public void add(byte[] name, SocketChannel channel, PackageHandler helper) throws UserDuplicatedException {
+    public synchronized void add(byte[] name, SocketChannel channel, PackageHandler helper) throws UserDuplicatedException {
         ArrayList<Byte> temp = ByteConvert.byteArray2List(name);
         SingleClientData data = new SingleClientData(channel);
         if (nameData.containsKey(temp)) throw new UserDuplicatedException();//TODO 重复名称处理

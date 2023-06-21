@@ -1,7 +1,7 @@
 package BackEnd.Server;
 
 import BackEnd.Exception.UserNotFoundException;
-import BackEnd.Exception.UserDuplicatedException;
+import BackEnd.Exception.NameSetting.UserDuplicatedException;
 import BackEnd.MessageTypePack.MessageType;
 import BackEnd.MessageTypePack.SystemMessageType;
 import BackEnd.PackageHandler;

@@ -1,4 +1,4 @@
-package BackEnd.Exception;
+package BackEnd.Exception.NameSetting;
 
 public class UserDuplicatedException extends Exception{
     public UserDuplicatedException() {

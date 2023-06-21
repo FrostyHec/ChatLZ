@@ -25,9 +25,10 @@ public class ReadHandler {
             }case CurrentUserList -> {
             }case NameDuplicated -> {
                 System.out.println("系统消息：名称重复！");
+                client.targetResetName();
             }case InitSucceed -> {
                 System.out.println("初始化成功!");
-                client.setInitState(true);
+                client.initSucceed();
             }
         }
     }

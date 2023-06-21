@@ -1,5 +1,6 @@
 package BackEnd.Client;
 
+import BackEnd.Exception.NameSetting.UsernameTooLongException;
 import BackEnd.MessageTypePack.RequestToSeverMsg;
 import BackEnd.WriteHandler;
 
@@ -9,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 public class Client {
-    private boolean isConnected, isInit;
+    private boolean isConnected, isInit,resetNameNeeded;
     private SocketChannel socketChannel;
     private final ReadHandler reader;
     private final WriteHandler writer;
@@ -37,7 +38,8 @@ public class Client {
         readThread.start();
     }
 
-    public void setName(String name) throws Exception {
+    public void setName(String name) throws UsernameTooLongException {
+        resetNameNeeded=false;
         write(writer.initName(name));
     }
 
@@ -71,8 +73,8 @@ public class Client {
         isInit = false;
     }
 
-    public void setInitState(boolean val) {
-        isInit = val;
+    public void initSucceed() {
+        isInit =true;
     }
 
     public boolean isInit() {
@@ -81,5 +83,12 @@ public class Client {
 
     public void requestToAdmin(byte[] source, RequestToSeverMsg msg) {
         write(writer.write(source, msg));
+    }
+
+    public boolean needResetName(){
+        return resetNameNeeded;
+    }
+    public void targetResetName() {
+        resetNameNeeded=true;
     }
 }
