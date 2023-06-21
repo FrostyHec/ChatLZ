@@ -6,6 +6,9 @@ public class LockShow {
         Thread b=new Thread(t2);
         a.start();
         b.start();
+        for (int i = 0; i < 100; i++) {
+            new Thread(new T(f)).start();
+        }
         while (!(t1.finished&&t2.finished)){
             System.out.println("waiting");
             Thread.sleep(500);
@@ -30,8 +33,10 @@ class T implements Runnable{
 class Fei{
     int val=0;
     public synchronized void increase(){
+        System.out.println(Thread.currentThread()+"进入");
         for (int i = 0; i < 10000000; i++) {
             val++;
         }
+        System.out.println(Thread.currentThread()+"离开");
     }
 }

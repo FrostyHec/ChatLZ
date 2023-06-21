@@ -29,11 +29,11 @@ public class ReadThread implements Runnable {
         }
         try {
             if (!channel.isConnected()) {
-                System.out.println("用户已经退出");
-                return;
+                return;//用户已经退出
             }
             helper.parse(channel, this, method);
         } catch (SocketException e) {
+            //TODO SocketException可能包含其他异常，需要继续你处理
             server.userOffLine(channel);
         }
     }
@@ -48,7 +48,7 @@ public class ReadThread implements Runnable {
                 server.initClientData(sender, channel, helper);
             }
             case RequestToServer -> {
-                server.backwardMsg(sender,bodyByte);
+                server.respondRequest(sender, bodyByte);
             }
         }
     }

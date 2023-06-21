@@ -4,6 +4,7 @@ import BackEnd.MessageTypePack.RequestToSeverMsg;
 import BackEnd.MessageTypePack.SystemMessageType;
 import BackEnd.Tools.ByteConvert;
 
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +21,7 @@ public class BackwardHandler {
         server.announce(getReceivers(sender), SystemMessageType.UserNotFound);
     }
 
-    public void analyzeBackwardMsg(byte[] sender, byte[] message) {
+    public void analyzeRequest(byte[] sender, byte[] message) {
         RequestToSeverMsg request = RequestToSeverMsg.get(ByteConvert.byteArray2Int(message));
         switch (request){
             case GetCurrentUserList -> sendCurrentUserList(sender);
@@ -36,5 +37,13 @@ public class BackwardHandler {
 
     private List<byte[]> getReceivers(byte[]... receivers){
         return new ArrayList<>(Arrays.asList(receivers));
+    }
+
+    public void duplicatedUser(SocketChannel senderChannel) {
+        server.announce(senderChannel,SystemMessageType.NameDuplicated.toByte());
+    }
+
+    public void connectSucceed(byte[] sender) {
+        server.announce(getReceivers(sender),SystemMessageType.InitSucceed);
     }
 }

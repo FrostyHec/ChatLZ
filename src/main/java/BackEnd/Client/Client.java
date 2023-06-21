@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 public class Client {
-    private boolean isConnected;
+    private boolean isConnected, isInit;
     private SocketChannel socketChannel;
     private final ReadHandler reader;
     private final WriteHandler writer;
@@ -18,6 +18,7 @@ public class Client {
     public Client(ReadHandler rh, WriteHandler wh) {
         reader = rh;
         writer = wh;
+        reader.initialize(this);
     }
 
     public void connect(String IP, int port) {
@@ -32,16 +33,19 @@ public class Client {
         isConnected = true;
 
         //开启监听线程
-        readThread = new Thread(new ReadThread(socketChannel, reader,this));
+        readThread = new Thread(new ReadThread(socketChannel, reader, this));
         readThread.start();
     }
+
     public void setName(String name) throws Exception {
         write(writer.initName(name));
     }
-    public void write(byte[] source,byte[] target,String words){
-        write(writer.write(source,target,words));
+
+    public void write(byte[] source, byte[] target, String words) {
+        write(writer.write(source, target, words));
     }
-    private void write(ByteBuffer buffer){
+
+    private void write(ByteBuffer buffer) {
         try {
             socketChannel.write(buffer);
             System.out.println("发送成功");
@@ -49,9 +53,11 @@ public class Client {
             e.printStackTrace();
         }
     }
-    public void linkBreak(){
+
+    public void linkBreak() {
         disconnect();
     }
+
     public void disconnect() {
         if (socketChannel != null) {
             try {
@@ -62,8 +68,18 @@ public class Client {
             }
         }
         isConnected = false;
+        isInit = false;
     }
-    public void requestToAdmin(byte[] source,RequestToSeverMsg msg){
-        write(writer.write(source,msg));
+
+    public void setInitState(boolean val) {
+        isInit = val;
+    }
+
+    public boolean isInit() {
+        return isInit;
+    }
+
+    public void requestToAdmin(byte[] source, RequestToSeverMsg msg) {
+        write(writer.write(source, msg));
     }
 }

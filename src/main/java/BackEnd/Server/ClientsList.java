@@ -1,46 +1,50 @@
 package BackEnd.Server;
 
 import BackEnd.Exception.UserNotFoundException;
+import BackEnd.Exception.UserDuplicatedException;
 import BackEnd.PackageHandler;
 import BackEnd.Tools.ByteConvert;
 
-import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 
 public class ClientsList {
     private final Map<List<Byte>, SingleClientData> nameData;
-    private final Map<SocketChannel, PackageHandler> helperData;
-    private final Map<SingleClientData, List<Byte>> dataName;
+    private final Map<SocketChannel, List<Byte>> channelName;
+    private final Map<SocketChannel, PackageHandler> channelHelper;
 
     public ClientsList() {
         nameData = new HashMap<>();
-        helperData = new HashMap<>();
-        dataName = new HashMap<>();
+        channelHelper = new HashMap<>();
+        channelName = new HashMap<>();
     }
 
-    public boolean hasInitName(SocketChannel channel) {
-        return helperData.containsKey(channel);
+    public boolean hasInitPackageHelper(SocketChannel channel) {
+        return channelHelper.containsKey(channel);
     }
 
     public PackageHandler getPackageHelper(SocketChannel channel) {
-        return helperData.get(channel);
+        return channelHelper.get(channel);
     }
 
-    public void add(byte[] name, SocketChannel channel, PackageHandler helper) {
+    public void add(byte[] name, SocketChannel channel, PackageHandler helper) throws UserDuplicatedException {
         ArrayList<Byte> temp = ByteConvert.byteArray2List(name);
         SingleClientData data = new SingleClientData(channel);
-        if (nameData.containsKey(temp)) throw new RuntimeException("名字重了");//TODO 重复名称处理
+        if (nameData.containsKey(temp)) throw new UserDuplicatedException();//TODO 重复名称处理
         nameData.put(temp, data);
-        dataName.put(data, temp);
-        helperData.put(channel, helper);
+        channelName.put(channel, temp);
+        channelHelper.put(channel, helper);
     }
-    public void remove(SocketChannel channel) {
-        SingleClientData c = new SingleClientData(channel);
-        if (!dataName.containsKey(c)) return;//不需要移除，已经移除过了
-        List<Byte> name = dataName.get(c);
-        dataName.remove(c);
+
+    public synchronized void remove(SocketChannel channel) {
+        if (!channelName.containsKey(channel)){
+            if(channel.isConnected()) System.out.println("一个未初始化的channel断连了");
+            return;
+        }
+        List<Byte> name = channelName.get(channel);
+        channelName.remove(channel);
         nameData.remove(name);
+        channelHelper.remove(channel);
         System.out.println("用户:" + new String(ByteConvert.byteList2Array(name)).trim() + " 已退出聊天室");
     }
 

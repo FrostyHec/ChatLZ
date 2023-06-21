@@ -1,6 +1,7 @@
 package BackEnd.Server;
 
 import BackEnd.Exception.UserNotFoundException;
+import BackEnd.Exception.UserDuplicatedException;
 import BackEnd.MessageTypePack.MessageType;
 import BackEnd.MessageTypePack.SystemMessageType;
 import BackEnd.PackageHandler;
@@ -59,12 +60,13 @@ public class Server implements Runnable {
                 //阻塞到有事件发生
                 if (selector.select() == 0) continue;
                 for (SelectionKey key : selector.selectedKeys()) {
+                    if(!key.isValid()) continue;//如果key已经失效则移除key
                     if (key.isAcceptable()) {
                         connectHandle();
                     } else if (key.isReadable()) {
                         //读取事件
                         SocketChannel channel = (SocketChannel) key.channel();
-                        PackageHandler helper = clientsList.hasInitName(channel) ? clientsList.getPackageHelper(channel) : new PackageHandler();
+                        PackageHandler helper = clientsList.hasInitPackageHelper(channel) ? clientsList.getPackageHelper(channel) : new PackageHandler();
                         ReadThread reader = new ReadThread(channel, this, helper);
                         new Thread(reader).start();
                     }
@@ -84,9 +86,22 @@ public class Server implements Runnable {
         }
     }
 
-    public void announce(List<byte[]> receivers, SystemMessageType msg) {//系统通知的信息
+    public void announce(List<byte[]> receivers, SystemMessageType msg) {
+        announce(receivers, msg, null);
+    }
+
+    public void announce(List<byte[]> receivers, SystemMessageType msg, String details) {//系统通知的信息
         byte[] systemName = WriteHandler.getNameByte("System");
-        byte[] message = msg.toByte();
+        byte[] messageHead = msg.toByte(), message = null;
+        if (details == null) {
+            message = messageHead;
+        } else {
+            byte[] messageBody = details.getBytes();
+            message = new byte[messageHead.length + messageBody.length];
+            //TODO 测试这一模块
+            System.arraycopy(messageHead, 0, message, 0, messageHead.length);
+            System.arraycopy(messageBody, 0, message, messageHead.length, messageBody.length);
+        }
         for (byte[] receiver : receivers) {
             forward(MessageType.SystemMessage, systemName, receiver, message);
         }
@@ -103,7 +118,14 @@ public class Server implements Runnable {
             e.printStackTrace();
         }
     }
-
+    public void announce(SocketChannel receiverChannel,byte[] msg){
+        byte[] empty=new byte[MessageType.userNameLength];
+        try {
+            receiverChannel.write(writer.write(MessageType.SystemMessage,empty,empty,msg));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     private void connectHandle() throws IOException {
         //接收并且注册
         SocketChannel clientChannel = serverSocket.accept();
@@ -124,17 +146,28 @@ public class Server implements Runnable {
     }
 
     public void initClientData(byte[] sender, SocketChannel channel, PackageHandler helper) {
-        clientsList.add(sender, channel, helper);
+        try {
+            clientsList.add(sender, channel, helper);
+        } catch (UserDuplicatedException e) {
+            backwardHandler.duplicatedUser(channel);
+            return;
+        }
         System.out.println("Successfully set username:");
         clientsList.printList();
+        backwardHandler.connectSucceed(sender);//回传登录成功
     }
 
-    public void userOffLine(SocketChannel channel) {
+    public synchronized void userOffLine(SocketChannel channel) {
         clientsList.remove(channel);
+        try {
+            channel.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void backwardMsg(byte[] sender, byte[] msg) {
-        backwardHandler.analyzeBackwardMsg(sender, msg);
+    public void respondRequest(byte[] sender, byte[] msg) {
+        backwardHandler.analyzeRequest(sender, msg);
     }
 
     public ClientsList getClientsList() {
